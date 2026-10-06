@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>回報管理後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F3EA; --paper-card:#FFFFFF; --ink:#1B3A4B; --ink-soft:#3E5A6B;
+    --vermillion:#C1440E; --vermillion-soft:#E9E1D3; --matcha:#6E7F3C;
+    --muted:#8A8272; --border:#E4DDCB; --danger:#B3261E;
+    --font-display:"Noto Serif TC",serif; --font-body:"Noto Sans TC",sans-serif; --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+  .hidden{display:none !important;}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,textarea{font-family:var(--font-body);}
+  h1,h2,h3{font-family:var(--font-display);margin:0 0 6px;}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--ink);color:var(--paper);gap:8px;}
+  .top-bar .brand{font-family:var(--font-display);font-size:17px;}
+  .top-bar .ghost{background:transparent;border:1px solid rgba(247,243,234,.4);color:var(--paper);padding:6px 12px;border-radius:999px;font-size:12.5px;}
+  .container{max-width:760px;margin:0 auto;padding:24px 16px 60px;}
+  .subtitle{color:var(--muted);font-size:13.5px;margin:0 0 16px;}
+  .card{background:var(--paper-card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
+  .field input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--paper);color:var(--ink);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:999px;border:none;font-size:14px;font-weight:600;}
+  .btn-accent{background:var(--vermillion);color:#fff;}
+  .btn-block{width:100%;}
+  .btn:disabled{opacity:.6;}
+  .auth-wrap{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .auth-card{max-width:380px;width:100%;background:var(--paper-card);border:1px solid var(--border);border-radius:18px;padding:30px 26px;}
+  .message{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#FBEAE7;color:var(--danger);}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{border:1px solid var(--border);background:var(--paper-card);color:var(--ink-soft);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;}
+  .tab.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .tab .count{font-family:var(--font-mono);font-size:11.5px;margin-left:4px;opacity:.8;}
+  .report.done{opacity:.72;}
+  .report-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .type-tag{font-weight:700;font-size:13px;}
+  .badge{font-size:11px;padding:2px 10px;border-radius:999px;white-space:nowrap;}
+  .badge.open{background:#FBEAE7;color:var(--danger);}
+  .badge.done{background:#E8EFDD;color:var(--matcha);}
+  .text{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin:10px 0;}
+  .shot{max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--border);cursor:zoom-in;display:block;margin-bottom:10px;}
+  .meta{font-size:11.5px;color:var(--muted);margin-top:3px;word-break:break-all;}
+  .note-box{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);}
+  .note-box textarea{width:100%;min-height:60px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--paper);color:var(--ink);resize:vertical;}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;}
+  .pill{border:none;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:600;}
+  .pill-ok{background:#E8EFDD;color:var(--matcha);}
+  .pill-del{background:#FBEAE7;color:var(--danger);}
+  .pill-save{background:var(--vermillion-soft);color:var(--vermillion);}
+  .empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:13.5px;}
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
+  .lightbox img{max-width:100%;max-height:92vh;border-radius:10px;}
+</style>
+</head>
+<body>
+<div id="topBar" class="top-bar hidden">
+  <div class="brand">🛠️ 回報管理後台</div>
+  <button class="ghost" id="logoutBtn">登出</button>
+</div>
+<div id="root"><div class="empty">載入中…</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAtMm_FyE_wlduD-T-dpGJSJTduoJhhDi4",
+  authDomain: "travel-app-d60a2.firebaseapp.com",
+  projectId: "travel-app-d60a2",
+  storageBucket: "travel-app-d60a2.firebasestorage.app",
+  messagingSenderId: "421219269881",
+  appId: "1:421219269881:web:64af48d9def28394857628",
+  measurementId: "G-QRTP15451X"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const ADMIN_UID = 'daLnya3P5TPKai8U7tFCrfayYOO2';
+const TYPE_LABELS = {bug:'🐞 功能壞掉', ui:'📱 畫面跑版', idea:'💡 功能建議', other:'💬 其他'};
+const root = document.getElementById('root');
+const topBar = document.getElementById('topBar');
+
+let reports = [];
+let filter = 'open';
+let unsubscribe = null;
+
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(ts){
+  if(!ts || typeof ts.toDate!=='function') return '剛剛';
+  return ts.toDate().toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function authError(err){
+  const map = {
+    'auth/invalid-credential':'email 或密碼錯誤',
+    'auth/wrong-password':'密碼錯誤',
+    'auth/user-not-found':'找不到這個帳號',
+    'auth/invalid-email':'email 格式不正確',
+    'auth/too-many-requests':'嘗試太多次了，請稍後再試',
+    'auth/network-request-failed':'網路連線失敗'
+  };
+  return map[err.code] || err.message;
+}
+
+document.getElementById('logoutBtn').onclick = ()=>auth.signOut();
+
+auth.onAuthStateChanged(user=>{
+  if(unsubscribe){ unsubscribe(); unsubscribe = null; }
+  if(!user){
+    topBar.classList.add('hidden');
+    renderLogin();
+    return;
+  }
+  topBar.classList.remove('hidden');
+  if(user.uid !== ADMIN_UID){
+    root.innerHTML = `<div class="container"><div class="card"><h2>沒有權限</h2><p class="subtitle" style="margin:0;">目前登入的帳號（${esc(user.email)}）不是管理員。請登出後改用管理員帳號。</p></div></div>`;
+    return;
+  }
+  if(!user.emailVerified){
+    root.innerHTML = `<div class="container"><div class="card"><h2>Email 尚未驗證</h2><p class="subtitle" style="margin:0;">請先到主 App 完成 Email 驗證。</p></div></div>`;
+    return;
+  }
+  startListening();
+});
+
+function renderLogin(){
+  root.innerHTML = `
+    <div class="auth-wrap"><div class="auth-card">
+      <h1 style="text-align:center;font-size:22px;">回報管理後台</h1>
+      <p class="subtitle" style="text-align:center;">請用管理員帳號登入</p>
+      <div id="msgBox"></div>
+      <form id="loginForm">
+        <div class="field"><label>Email</label><input type="email" id="email" required></div>
+        <div class="field"><label>密碼</label><input type="password" id="password" required></div>
+        <button type="submit" class="btn btn-accent btn-block">登入</button>
+      </form>
+    </div></div>`;
+  document.getElementById('loginForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = '登入中…';
+    try{
+      await auth.signInWithEmailAndPassword(
+        document.getElementById('email').value.trim(),
+        document.getElementById('password').value
+      );
+    }catch(err){
+      document.getElementById('msgBox').innerHTML = `<div class="message">${esc(authError(err))}</div>`;
+      btn.disabled = false; btn.textContent = '登入';
+    }
+  };
+}
+
+function startListening(){
+  root.innerHTML = `<div class="empty">載入回報中…</div>`;
+  // 即時監聽：有新回報或你在別的裝置改了狀態，這裡會自動更新
+  unsubscribe = db.collection('bugReports').orderBy('createdAt','desc').onSnapshot(
+    snap=>{
+      reports = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      render();
+    },
+    err=>{
+      root.innerHTML = `<div class="container"><div class="card"><h2>載入失敗</h2><p class="subtitle" style="margin:0;">${esc(err.message)}<br>請確認 Firestore 規則已更新為「管理員可讀取 bugReports」。</p></div></div>`;
+    }
+  );
+}
+
+function render(){
+  const openCount = reports.filter(r=>r.status!=='done').length;
+  const doneCount = reports.length - openCount;
+  const list = reports.filter(r=>{
+    if(filter==='open') return r.status!=='done';
+    if(filter==='done') return r.status==='done';
+    return true;
+  });
+
+  // 保留使用者正在編輯的備註，避免即時更新時內容被洗掉
+  const draftNotes = {};
+  document.querySelectorAll('[data-note-input]').forEach(t=>{ draftNotes[t.dataset.noteInput] = t.value; });
+
+  root.innerHTML = `
+    <div class="container">
+      <p class="subtitle">未處理 ${openCount} 筆・已處理 ${doneCount} 筆（有新回報會自動出現）</p>
+      <div class="tabs">
+        <button class="tab ${filter==='open'?'active':''}" data-filter="open">未處理<span class="count">${openCount}</span></button>
+        <button class="tab ${filter==='done'?'active':''}" data-filter="done">已處理<span class="count">${doneCount}</span></button>
+        <button class="tab ${filter==='all'?'active':''}" data-filter="all">全部<span class="count">${reports.length}</span></button>
+      </div>
+      ${list.length===0 ? `<div class="empty">${filter==='open'?'沒有未處理的回報 🎉':'這裡還沒有回報'}</div>` : list.map(r=>{
+        const isDone = r.status==='done';
+        const note = draftNotes[r.id] !== undefined ? draftNotes[r.id] : (r.resolutionNote||'');
+        return `
+        <div class="card report ${isDone?'done':''}">
+          <div class="report-top">
+            <span class="type-tag">${TYPE_LABELS[r.type]||esc(r.type||'')}</span>
+            <span class="badge ${isDone?'done':'open'}">${isDone?'✓ 已處理':'未處理'}</span>
+          </div>
+          <div class="text">${esc(r.text||'（沒有文字）')}</div>
+          ${r.image ? `<img class="shot" src="${r.image}" data-zoom title="點擊放大">` : ''}
+          <div class="meta">👤 ${esc(r.displayName||'')}（${esc(r.email||'')}）</div>
+          <div class="meta">🧳 ${esc(r.tripName||'')}　🕒 ${fmtTime(r.createdAt)}${isDone && r.resolvedAt ? `　✅ 處理於 ${fmtTime(r.resolvedAt)}` : ''}</div>
+          <div class="meta">📟 ${esc(r.screen||'')}　${esc(r.userAgent||'')}</div>
+          <div class="note-box">
+            <textarea data-note-input="${r.id}" placeholder="處理備註（選填，例如：已在 v1.3 修正）">${esc(note)}</textarea>
+            <div class="actions">
+              <button class="pill pill-save" data-save-note="${r.id}">儲存備註</button>
+              <button class="pill pill-ok" data-toggle="${r.id}">${isDone?'改回未處理':'✓ 標記已處理'}</button>
+              <button class="pill pill-del" data-del="${r.id}">刪除</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  root.querySelectorAll('[data-filter]').forEach(b=>b.onclick = ()=>{ filter = b.dataset.filter; render(); });
+  root.querySelectorAll('[data-zoom]').forEach(img=>img.onclick = ()=>openLightbox(img.src));
+
+  root.querySelectorAll('[data-toggle]').forEach(btn=>btn.onclick = async ()=>{
+    const id = btn.dataset.toggle;
+    const r = reports.find(x=>x.id===id);
+    const noteEl = root.querySelector(`[data-note-input="${id}"]`);
+    const markDone = r.status!=='done';
+    const data = { status: markDone ? 'done' : 'open', resolutionNote: noteEl ? noteEl.value.trim() : (r.resolutionNote||'') };
+    data.resolvedAt = markDone ? firebase.firestore.FieldValue.serverTimestamp() : firebase.firestore.FieldValue.delete();
+    btn.disabled = true;
+    try{ await db.collection('bugReports').doc(id).update(data); }
+    catch(err){ alert('更新失敗：'+err.message); btn.disabled = false; }
+  });
+
+  root.querySelectorAll('[data-save-note]').forEach(btn=>btn.onclick = async ()=>{
+    const id = btn.dataset.saveNote;
+    const noteEl = root.querySelector(`[data-note-input="${id}"]`);
+    btn.disabled = true;
+    try{
+      await db.collection('bugReports').doc(id).update({ resolutionNote: noteEl.value.trim() });
+      btn.textContent = '已儲存 ✓';
+      setTimeout(()=>{ if(document.body.contains(btn)){ btn.textContent='儲存備註'; btn.disabled=false; } }, 1200);
+    }catch(err){ alert('儲存失敗：'+err.message); btn.disabled = false; }
+  });
+
+  root.querySelectorAll('[data-del]').forEach(btn=>btn.onclick = async ()=>{
+    if(!confirm('確定要刪除這筆回報嗎？無法復原。')) return;
+    try{ await db.collection('bugReports').doc(btn.dataset.del).delete(); }
+    catch(err){ alert('刪除失敗：'+err.message); }
+  });
+}
+
+function openLightbox(src){
+  const box = document.createElement('div');
+  box.className = 'lightbox';
+  box.innerHTML = `<img src="${src}">`;
+  box.onclick = ()=>box.remove();
+  document.body.appendChild(box);
+}
+</script>
+</body>
+</html>
